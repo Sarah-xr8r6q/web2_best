@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note Taking</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body, button, input, div {
+            font-family: "Times New Roman", Times, serif;
+        }
+        .toolbar {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background-color: #78C8D5;
+            border: 1px solid #EFF1F3;
+            padding: 10px;
+            z-index: 1000;
+            box-shadow: 0 0 10px #009FB7;
+            border-radius: 15px; /* Increased border radius for more rounded corners */
+
+        }
+        #editor {
+            flex-grow: 1;
+            border: 1px solid #EFF1F3;
+            padding: 10px;
+            overflow-y: auto;
+            min-height: 300px;
+            font-family: 'Times New Roman', Times, serif;
+            color: #272727;
+            box-shadow: 0 0 10px #F7E4AD;
+            border-radius: 15px; /* Increased border radius for more rounded corners */
+        }
+
+        .editable-note {
+            cursor: pointer;
+        }
+        .editable-note input {
+            display: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #editor img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 10px auto;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        body {
+            background-color: #EFF1F3;
+            background-image:
+                linear-gradient(45deg, #009FB7 25%, transparent 25%, transparent 75%, #009FB7 75%, #009FB7),
+                linear-gradient(-45deg, #FED766 25%, transparent 25%, transparent 75%, #FED766 75%, #FED766),
+                linear-gradient(to right, #696773, #696773 1px, transparent 1px, transparent);
+            background-size:
+                60px 60px,
+                60px 60px,
+                20px 100%;
+            background-position:
+                0 0,
+                30px 30px,
+                0 0;
+            background-attachment: fixed;
+            font-family: "Times New Roman", Times, serif;
+        }
+        main {
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .content-wrapper {
+            background-color: rgba(239, 241, 243, 0.9); /* #EFF1F3 with 90% opacity */
+            padding: 20px;
+            border-radius: 15px;
+            min-height: calc(100vh - 40px); /* Subtract padding of main */
+            box-shadow: 0 0 20px rgba(39, 39, 39, 0.1);
+        }
+        #editor {
+            min-height: 300px;
+            height: auto;
+            overflow-y: auto;
+            background-color: rgba(255, 255, 255, 0.7);
+            border: 1px solid #272727;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo"></div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="content-wrapper">
+            <aside class="sidebar">
+                <h2 style="text-align: center;" contenteditable="true">Note</h2>
+            </aside>
+
+            <section class="content-area">
+                <div id="toolbar" class="toolbar">
+                    <button id="boldBtn" title="Bold (Cmd+B)">B</button>
+                    <button id="underlineBtn" title="Underline (Cmd+U)">U</button>
+                    <button id="highlightBtn" title="Highlight">H</button>
+                    <input type="color" id="textColorPicker" title="Text Color" value="#272727">
+                    <input type="color" id="highlightColorPicker" title="Highlight Color" value="#FED766">
+                    <button id="undoBtn" title="Undo (Cmd+Z)">↶</button>
+                    <button id="redoBtn" title="Redo (Cmd+Shift+Z)">↷</button>
+                    <select id="fontSizeSelector" title="Font Size">
+                        <option value="">Font Size</option>
+                        <option value="1">8pt</option>
+                        <option value="2">10pt</option>
+                        <option value="3">12pt</option>
+                        <option value="4">14pt</option>
+                        <option value="5">18pt</option>
+                        <option value="6">24pt</option>
+                        <option value="7">36pt</option>
+                    </select>
+                </div>
+                <div id="editor" contenteditable="true">
+                    <p>Start typing your notes here...</p>
+                </div>
+                <div id="word-count">Words: 0</div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const editor = document.getElementById('editor');
+            const wordCount = document.getElementById('word-count');
+            const boldBtn = document.getElementById('boldBtn');
+            const underlineBtn = document.getElementById('underlineBtn');
+            const highlightBtn = document.getElementById('highlightBtn');
+            const textColorPicker = document.getElementById('textColorPicker');
+            const highlightColorPicker = document.getElementById('highlightColorPicker');
+            const undoBtn = document.getElementById('undoBtn');
+            const redoBtn = document.getElementById('redoBtn');
+            const fontSizeSelector = document.getElementById('fontSizeSelector');
+
+            function updateWordCount() {
+                const text = editor.innerText || editor.textContent;
+                const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+                wordCount.textContent = `Words: ${words.length}`;
+            }
+
+            editor.addEventListener('input', updateWordCount);
+
+            function execCommand(command, value = null) {
+                document.execCommand(command, false, value);
+                editor.focus();
+            }
+
+            boldBtn.addEventListener('click', () => execCommand('bold'));
+            underlineBtn.addEventListener('click', () => execCommand('underline'));
+
+            let isHighlighting = false;
+            highlightBtn.addEventListener('click', () => {
+                isHighlighting = !isHighlighting;
+                if (isHighlighting) {
+                    execCommand('backColor', highlightColorPicker.value);
+                } else {
+                    execCommand('backColor', 'transparent');
+                }
+            });
+
+            textColorPicker.addEventListener('change', function() {
+                execCommand('foreColor', this.value);
+            });
+
+            highlightColorPicker.addEventListener('change', function() {
+                if (isHighlighting) {
+                    execCommand('backColor', this.value);
+                }
+            });
+
+            undoBtn.addEventListener('click', () => execCommand('undo'));
+            redoBtn.addEventListener('click', () => execCommand('redo'));
+
+            fontSizeSelector.addEventListener('change', function() {
+                execCommand('fontSize', this.value);
+            });
+
+            // Initial word count
+            updateWordCount();
+
+            // Log to console when color pickers are used
+            textColorPicker.addEventListener('input', function() {
+                console.log('Text color changed to:', this.value);
+            });
+
+            highlightColorPicker.addEventListener('input', function() {
+                console.log('Highlight color changed to:', this.value);
+            });
+
+            // Add event listener for pasting
+            editor.addEventListener('paste', function(e) {
+                e.preventDefault();
+                var items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        var blob = items[i].getAsFile();
+                        var reader = new FileReader();
+                        reader.onload = function(event) {
+                            var img = document.createElement('img');
+                            img.src = event.target.result;
+                            document.execCommand('insertHTML', false, img.outerHTML);
+                        };
+                        reader.readAsDataURL(blob);
+                    } else if (items[i].type === 'text/plain') {
+                        items[i].getAsString(function(text) {
+                            document.execCommand('insertText', false, text);
+                        });
+                    }
+                }
+            });
+
+            // Add functionality for editable note titles
+            const noteList = document.getElementById('note-list');
+            noteList.addEventListener('click', function(e) {
+                const noteItem = e.target.closest('.editable-note');
+                if (noteItem) {
+                    // ... (handle note item click event)
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
+
